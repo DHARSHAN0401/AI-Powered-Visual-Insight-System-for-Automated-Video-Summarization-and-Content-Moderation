@@ -1,0 +1,16 @@
+opencv-python
+numpy
+pandas
+scenedetect
+ultralytics
+torch
+torchvision
+transformers
+whisper
+moviepy
+tqdm
+clip-by-openai
+streamlit
+imageio-ffmpeg
+python-dotenv
+requests
