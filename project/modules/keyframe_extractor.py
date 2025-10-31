@@ -1,11 +1,9 @@
-"""Select representative keyframes from scenes."""
 import cv2
 import os
 from project.modules.utils import timeit, setup_logger
 from tqdm import tqdm
 
 logger = setup_logger(__name__)
-
 
 class KeyframeExtractor:
     def __init__(self, outdir: str):
@@ -15,10 +13,6 @@ class KeyframeExtractor:
 
     @timeit
     def extract_keyframes(self, video_path: str, scenes: list):
-        """For each scene choose the middle frame as representative keyframe.
-
-        Returns list of dicts: {scene_idx, start, end, frame_path, timestamp}
-        """
         cap = cv2.VideoCapture(video_path)
         fps = cap.get(cv2.CAP_PROP_FPS) or 25
         results = []

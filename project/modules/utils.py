@@ -1,19 +1,15 @@
-"""Utility helpers and configuration for pipeline."""
 import os
 import logging
 import uuid
 import time
 from functools import wraps
 
-
 def ensure_dirs(paths):
     for p in paths:
         os.makedirs(p, exist_ok=True)
 
-
 def generate_id():
     return uuid.uuid4().hex[:12]
-
 
 def setup_logger(name=__name__, level=logging.INFO):
     logger = logging.getLogger(name)
@@ -24,7 +20,6 @@ def setup_logger(name=__name__, level=logging.INFO):
         logger.addHandler(ch)
     logger.setLevel(level)
     return logger
-
 
 def timeit(func):
     @wraps(func)

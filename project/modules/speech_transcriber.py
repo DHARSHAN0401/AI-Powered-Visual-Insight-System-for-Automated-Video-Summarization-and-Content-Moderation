@@ -3,7 +3,6 @@ from project.modules.utils import setup_logger, timeit
 
 logger = setup_logger(__name__)
 
-
 class SpeechTranscriber:
     def __init__(self, model_name: str = "base", use_gpu: bool = False):
         self.model_name = model_name
@@ -28,7 +27,6 @@ class SpeechTranscriber:
         if not self.model:
             logger.warning("Whisper not available, returning placeholder transcript.")
             return "", []
-        
         try:
             res = self.model.transcribe(audio_path, fp16=self.device=="cuda")
             text = res.get("text", "")

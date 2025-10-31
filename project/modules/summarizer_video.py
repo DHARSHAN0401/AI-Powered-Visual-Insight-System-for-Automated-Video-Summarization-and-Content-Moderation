@@ -1,10 +1,8 @@
-"""Creates a short summarized video by selecting top scenes and concatenating them."""
 import os
 from project.modules.utils import setup_logger, timeit
 from tqdm import tqdm
 
 logger = setup_logger(__name__)
-
 
 class VideoSummarizer:
     def __init__(self, outdir: str):
@@ -12,10 +10,6 @@ class VideoSummarizer:
 
     @timeit
     def create_summary_video(self, video_path: str, scenes: list, det_results: list, max_scenes: int = 6):
-        """Selects top scenes (by presence of detections or simply first N) and concatenates them.
-
-        Returns path to summary video.
-        """
         scored = []
         det_map = {r["scene_idx"]: r for r in det_results}
         for i, s in enumerate(scenes):
@@ -26,14 +20,11 @@ class VideoSummarizer:
             scored.append((score, i, s))
         scored.sort(reverse=True)
         chosen = [s for _, _, s in scored[:max_scenes]]
-
-        # Try to use moviepy if available
         try:
             import importlib
             moviepy = importlib.import_module("moviepy.editor")
             VideoFileClip = getattr(moviepy, "VideoFileClip")
             concatenate_videoclips = getattr(moviepy, "concatenate_videoclips")
-
             clips = []
             for start, end in tqdm(chosen, desc="Building summary clips"):
                 try:
@@ -41,11 +32,9 @@ class VideoSummarizer:
                     clips.append(clip)
                 except Exception as e:
                     logger.warning("Failed to create clip %s-%s: %s", start, end, e)
-
             if not clips:
                 logger.warning("No clips selected; creating a short sample from the start")
                 clips = [VideoFileClip(video_path).subclip(0, min(5, 5))]
-
             final = concatenate_videoclips(clips)
             out_path = os.path.join(self.outdir, "summary.mp4")
             final.write_videofile(out_path, codec="libx264", audio_codec="aac")
@@ -55,17 +44,12 @@ class VideoSummarizer:
             return out_path
         except Exception as e:
             logger.warning("moviepy not available or failed: %s", e)
-            # fallback: if ffmpeg exists, try to create a short clip using ffmpeg
             out_path = os.path.join(self.outdir, "summary.mp4")
             try:
-                # pick first chosen scene or fallback to 0-5s
                 start, end = chosen[0] if chosen else (0, min(5, 5))
                 duration = max(0.5, end - start)
-                cmd = [
-                    'ffmpeg', '-y', '-ss', str(start), '-i', video_path, '-t', str(duration), '-c', 'copy', out_path
-                ]
+                cmd = ['ffmpeg', '-y', '-ss', str(start), '-i', video_path, '-t', str(duration), '-c', 'copy', out_path]
                 import subprocess
-
                 subprocess.run(cmd, check=False, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
                 return out_path
             except Exception as e2:
