@@ -1,59 +1,42 @@
-"""Simple speech transcriber placeholder.
-
-This implementation attempts to import Whisper if available. If not,
-it returns an empty transcript and no segments. This keeps the pipeline
-lightweight for demonstration.
-"""
+import torch
 from project.modules.utils import setup_logger, timeit
 
 logger = setup_logger(__name__)
 
 
 class SpeechTranscriber:
-    def __init__(self, model_name: str = "small"):
+    def __init__(self, model_name: str = "base", use_gpu: bool = False):
         self.model_name = model_name
+        self.device = "cuda" if use_gpu and torch.cuda.is_available() else "cpu"
+        logger.info(f"Initializing SpeechTranscriber on device: {self.device}")
         self.model = None
 
     def _load(self):
         if self.model is None:
             try:
                 import whisper
-                # use getattr to avoid static analysis error if attribute isn't present
-                load_fn = getattr(whisper, "load_model", None)
-                if callable(load_fn):
-                    self.model = load_fn(self.model_name)
-                    logger.info("Loaded Whisper model '%s'", self.model_name)
-                else:
-                    self.model = None
-            except Exception:
-                # silence the exception; we fall back to placeholder
+                logger.info(f"Loading Whisper model '{self.model_name}'...")
+                self.model = whisper.load_model(self.model_name, device=self.device)
+                logger.info("Whisper model loaded successfully.")
+            except Exception as e:
+                logger.error(f"Failed to load Whisper model: {e}")
                 self.model = None
 
     @timeit
     def transcribe(self, audio_path: str):
         self._load()
         if not self.model:
-            logger.info("Whisper not available, returning placeholder transcript")
-            # placeholder: return empty text and no segments
+            logger.warning("Whisper not available, returning placeholder transcript.")
             return "", []
-        transcribe_fn = getattr(self.model, "transcribe", None)
-        if not callable(transcribe_fn):
-            return "", []
-        res = transcribe_fn(audio_path)
-        if isinstance(res, dict):
+        
+        try:
+            res = self.model.transcribe(audio_path, fp16=self.device=="cuda")
             text = res.get("text", "")
             segments = res.get("segments", [])
-        else:
-            # best-effort extraction
-            try:
-                text = getattr(res, "text", "") or ""
-            except Exception:
-                text = ""
-            try:
-                segments = getattr(res, "segments", []) or []
-            except Exception:
-                segments = []
-        return text, segments
+            return text, segments
+        except Exception as e:
+            logger.error(f"Error during transcription: {e}")
+            return "", []
 
     def transcribe_audio(self, audio_path: str):
         return self.transcribe(audio_path)

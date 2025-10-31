@@ -1,0 +1,16 @@
+Video Summary Report
+Generated: 2025-10-31 15:40:25
+
+Video Analysis:
+- Total Scenes Detected: 2
+- Keyframes Extracted: 2
+- Video Duration: 48.22 seconds
+
+Scene Breakdown:
+
+Scene 1:
+  Time: 0.00s - 14.01s
+  Duration: 14.01s
+Scene 2:
+  Time: 14.01s - 48.22s
+  Duration: 34.22s

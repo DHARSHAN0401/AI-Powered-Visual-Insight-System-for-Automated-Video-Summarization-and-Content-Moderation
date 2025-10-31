@@ -1,0 +1,14 @@
+# Core dependencies for Streamlit Cloud deployment
+streamlit>=1.25.0
+opencv-python-headless>=4.8.0
+numpy>=1.24.0
+Pillow>=10.0.0
+scenedetect[opencv]>=0.6.2
+python-dotenv>=1.0.0
+
+# Optional: Uncomment for full AI features (requires more memory)
+# torch>=2.0.0
+# torchvision>=0.15.0
+# transformers>=4.30.0
+# openai-whisper>=20230314
+# ultralytics>=8.0.0

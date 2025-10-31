@@ -36,7 +36,7 @@ class VideoPreprocessor:
         return out
 
     @timeit
-    def detect_scenes(self):
+    def detect_scenes(self, threshold: float = 30.0):
         """Detect shot boundaries using ContentDetector.
 
         Returns a list of (start_time, end_time) in seconds.
@@ -47,7 +47,7 @@ class VideoPreprocessor:
 
             video_manager = VideoManager([self.path])
             scene_manager = SceneManager()
-            scene_manager.add_detector(ContentDetector())
+            scene_manager.add_detector(ContentDetector(threshold=threshold))
             try:
                 video_manager.start()
                 scene_manager.detect_scenes(frame_source=video_manager)

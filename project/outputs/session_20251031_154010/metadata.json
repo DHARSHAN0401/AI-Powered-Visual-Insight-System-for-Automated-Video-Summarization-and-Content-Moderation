@@ -1,0 +1,25 @@
+{
+  "scenes": 2,
+  "keyframes": [
+    {
+      "index": 0,
+      "path": "outputs\\session_20251031_154010\\storyboard\\keyframe_000.jpg",
+      "timestamp": 7.003380590133703,
+      "scene": [
+        0.0,
+        14.006761180267405
+      ]
+    },
+    {
+      "index": 1,
+      "path": "outputs\\session_20251031_154010\\storyboard\\keyframe_001.jpg",
+      "timestamp": 31.09500982019364,
+      "scene": [
+        14.006761180267405,
+        48.22327777777778
+      ]
+    }
+  ],
+  "timestamp": "2025-10-31T15:40:25.204443",
+  "processing_mode": "basic"
+}
