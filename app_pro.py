@@ -1042,7 +1042,7 @@ def extract_keyframes_parallel(video_path: str, scenes: List[Tuple], output_dir:
     cap.release()
     return sorted(keyframes, key=lambda x: x['scene_idx'])
 
-def extract_audio_from_video(video_path: str, output_dir: str) -> str:
+def extract_audio_from_video(video_path: str, output_dir: str) -> str | None:
     try:
         from moviepy import VideoFileClip
         audio_path = os.path.join(output_dir, "audio.wav")
@@ -1219,7 +1219,7 @@ def transcribe_audio_advanced(audio_path: str, target_language: str = 'auto') ->
                 
                 for lang in languages_to_try:
                     try:
-                        text = recognizer.recognize_google(audio_data, language=lang, show_all=False)
+                        text = recognizer.recognize_google(audio_data, language=lang, show_all=False)  # type: ignore
                         if text and len(text.strip()) > 10:  # Valid transcription
                             # Simple confidence heuristic: longer = more likely correct
                             confidence = min(0.95, 0.6 + (len(text) / 500))
@@ -1246,7 +1246,7 @@ def transcribe_audio_advanced(audio_path: str, target_language: str = 'auto') ->
                     }
             else:
                 # Use specified language
-                text = recognizer.recognize_google(audio_data, language=lang_code, show_all=False)
+                text = recognizer.recognize_google(audio_data, language=lang_code, show_all=False)  # type: ignore
                 if text and len(text.strip()) > 0:
                     words = len(text.split())
                     return {
@@ -1329,7 +1329,7 @@ def generate_text_summary(text: str, max_sentences: int = 3) -> Dict:
             nltk.download('stopwords', quiet=True)
         
         blob = TextBlob(text)
-        sentences = list(blob.sentences)
+        sentences = list(blob.sentences)  # type: ignore
         
         if len(sentences) == 0:
             return {
@@ -1343,7 +1343,7 @@ def generate_text_summary(text: str, max_sentences: int = 3) -> Dict:
         stop_words = set(stopwords.words('english'))
         word_frequencies = {}
         
-        for word in blob.words:
+        for word in blob.words:  # type: ignore
             if word.lower() not in stop_words and len(word) > 3:
                 word_frequencies[word.lower()] = word_frequencies.get(word.lower(), 0) + 1
         
@@ -1373,7 +1373,7 @@ def generate_text_summary(text: str, max_sentences: int = 3) -> Dict:
         
         # Select top sentences
         if len(sentence_scores) > 0:
-            top_indices = sorted(sentence_scores, key=sentence_scores.get, reverse=True)[:max_sentences]
+            top_indices = sorted(sentence_scores, key=lambda x: sentence_scores.get(x, 0), reverse=True)[:max_sentences]
             top_indices.sort()  # Maintain original order
             selected_sentences = [str(sentences[i]) for i in top_indices]
         else:
@@ -1385,8 +1385,8 @@ def generate_text_summary(text: str, max_sentences: int = 3) -> Dict:
         key_points = selected_sentences[:3] if len(selected_sentences) >= 3 else selected_sentences
         
         # Sentiment analysis with improved accuracy
-        sentiment_score = blob.sentiment.polarity
-        subjectivity = blob.sentiment.subjectivity
+        sentiment_score = blob.sentiment.polarity  # type: ignore
+        subjectivity = blob.sentiment.subjectivity  # type: ignore
         
         if sentiment_score > 0.15:
             sentiment = 'positive'
@@ -1396,7 +1396,7 @@ def generate_text_summary(text: str, max_sentences: int = 3) -> Dict:
             sentiment = 'neutral'
         
         # Extract topics (most frequent meaningful words)
-        words = [word.lower() for word in blob.words if word.lower() not in stop_words and len(word) > 4]
+        words = [word.lower() for word in blob.words if word.lower() not in stop_words and len(word) > 4]  # type: ignore
         word_freq = Counter(words)
         topics = [word for word, count in word_freq.most_common(5)]
         
@@ -1551,7 +1551,7 @@ def detect_content_issues(text: str, keyframes: List, language: str = 'en') -> D
                     img = cv2.imread(kf['frame_path'])
                     if img is not None:
                         gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-                        brightness_values.append(np.mean(gray))
+                        brightness_values.append(float(np.mean(gray)))  # type: ignore
             if brightness_values:
                 avg_brightness = np.mean(brightness_values)
         except Exception:
@@ -1724,7 +1724,16 @@ def process_video_pro(
             lang_display = 'Auto-Detecting' if target_language == 'auto' else target_language
             progress_callback(f"🎤 Transcribing speech ({lang_display})...", 0.60)
         
-        transcription = transcribe_audio_advanced(audio_path, target_language)
+        if audio_path:
+            transcription = transcribe_audio_advanced(audio_path, target_language)
+        else:
+            transcription = {
+                'text': 'No audio detected in video.',
+                'word_count': 0,
+                'status': 'no_audio',
+                'language': 'en-US',
+                'detected_language': 'English'
+            }
         results['transcription'] = transcription
         
         # Get detected language for content moderation
@@ -1853,110 +1862,6 @@ def main():
         if st.button(f"⭐ Favorites ({fav_count})", use_container_width=True, type="primary" if st.session_state['filter_selection'] == 'Favorites' else "secondary"):
             st.session_state['filter_selection'] = 'Favorites'
             st.rerun()
-    
-    # Modern Info Cards Section - Replace sidebar content
-    st.markdown("<br>", unsafe_allow_html=True)
-    
-    # Add proper column spacing with gap parameter
-    info_col1, info_col2, info_col3, info_col4 = st.columns(4, gap="medium")
-    
-    with info_col1:
-        st.markdown("""
-        <div class="info-card-container" style="
-            background: linear-gradient(135deg, rgba(102,126,234,0.15), rgba(118,75,162,0.15));
-            border: 2px solid rgba(102,126,234,0.3);
-            border-radius: 15px;
-            padding: 20px 15px;
-            text-align: center;
-            box-shadow: 0 8px 25px rgba(0,0,0,0.2);
-            height: 120px;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            cursor: pointer;
-        " onmouseover="this.style.transform='translateY(-5px) scale(1.02)'; this.style.boxShadow='0 15px 40px rgba(0, 212, 255, 0.4)'; this.style.borderColor='rgba(0, 212, 255, 0.6)';" 
-           onmouseout="this.style.transform='translateY(0) scale(1)'; this.style.boxShadow='0 8px 25px rgba(0,0,0,0.2)'; this.style.borderColor='rgba(102,126,234,0.3)';">
-            <div style="font-size: 2rem; margin-bottom: 8px; line-height: 1; transition: transform 0.3s ease;">🎬</div>
-            <h2 style="color: #00d4ff; margin: 0 0 6px 0; font-size: 1.2rem !important; font-weight: 700; line-height: 1.3;">Scene Detection</h2>
-            <p style="color: rgba(255,255,255,0.8); margin: 0; font-size: 0.85rem !important; line-height: 1.4;">AI-powered segmentation</p>
-        </div>
-        """, unsafe_allow_html=True)
-    
-    with info_col2:
-        st.markdown("""
-        <div class="info-card-container" style="
-            background: linear-gradient(135deg, rgba(240,147,251,0.15), rgba(245,87,108,0.15));
-            border: 2px solid rgba(240,147,251,0.3);
-            border-radius: 15px;
-            padding: 20px 15px;
-            text-align: center;
-            box-shadow: 0 8px 25px rgba(0,0,0,0.2);
-            height: 120px;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            cursor: pointer;
-        " onmouseover="this.style.transform='translateY(-5px) scale(1.02)'; this.style.boxShadow='0 15px 40px rgba(240, 147, 251, 0.4)'; this.style.borderColor='rgba(240, 147, 251, 0.6)';" 
-           onmouseout="this.style.transform='translateY(0) scale(1)'; this.style.boxShadow='0 8px 25px rgba(0,0,0,0.2)'; this.style.borderColor='rgba(240,147,251,0.3)';">
-            <div style="font-size: 2rem; margin-bottom: 8px; line-height: 1; transition: transform 0.3s ease;">🎤</div>
-            <h2 style="color: #f093fb; margin: 0 0 6px 0; font-size: 1.2rem !important; font-weight: 700; line-height: 1.3;">Speech-to-Text</h2>
-            <p style="color: rgba(255,255,255,0.8); margin: 0; font-size: 0.85rem !important; line-height: 1.4;">Multi-language transcription</p>
-        </div>
-        """, unsafe_allow_html=True)
-    
-    with info_col3:
-        st.markdown("""
-        <div class="info-card-container" style="
-            background: linear-gradient(135deg, rgba(79,172,254,0.15), rgba(0,242,254,0.15));
-            border: 2px solid rgba(79,172,254,0.3);
-            border-radius: 15px;
-            padding: 20px 15px;
-            text-align: center;
-            box-shadow: 0 8px 25px rgba(0,0,0,0.2);
-            height: 120px;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            cursor: pointer;
-        " onmouseover="this.style.transform='translateY(-5px) scale(1.02)'; this.style.boxShadow='0 15px 40px rgba(79, 172, 254, 0.4)'; this.style.borderColor='rgba(79, 172, 254, 0.6)';" 
-           onmouseout="this.style.transform='translateY(0) scale(1)'; this.style.boxShadow='0 8px 25px rgba(0,0,0,0.2)'; this.style.borderColor='rgba(79,172,254,0.3)';">
-            <div style="font-size: 2rem; margin-bottom: 8px; line-height: 1; transition: transform 0.3s ease;">📝</div>
-            <h2 style="color: #4facfe; margin: 0 0 6px 0; font-size: 1.2rem !important; font-weight: 700; line-height: 1.3;">AI Summary</h2>
-            <p style="color: rgba(255,255,255,0.8); margin: 0; font-size: 0.85rem !important; line-height: 1.4;">Key point extraction</p>
-        </div>
-        """, unsafe_allow_html=True)
-    
-    with info_col4:
-        st.markdown("""
-        <div class="info-card-container" style="
-            background: linear-gradient(135deg, rgba(118,75,162,0.15), rgba(102,126,234,0.15));
-            border: 2px solid rgba(118,75,162,0.3);
-            border-radius: 15px;
-            padding: 20px 15px;
-            text-align: center;
-            box-shadow: 0 8px 25px rgba(0,0,0,0.2);
-            height: 120px;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            cursor: pointer;
-        " onmouseover="this.style.transform='translateY(-5px) scale(1.02)'; this.style.boxShadow='0 15px 40px rgba(118, 75, 162, 0.4)'; this.style.borderColor='rgba(118, 75, 162, 0.6)';" 
-           onmouseout="this.style.transform='translateY(0) scale(1)'; this.style.boxShadow='0 8px 25px rgba(0,0,0,0.2)'; this.style.borderColor='rgba(118,75,162,0.3)';">
-            <div style="font-size: 2rem; margin-bottom: 8px; line-height: 1; transition: transform 0.3s ease;">🛡️</div>
-            <h2 style="color: #764ba2; margin: 0 0 6px 0; font-size: 1.2rem !important; font-weight: 700; line-height: 1.3;">Safety Check</h2>
-            <p style="color: rgba(255,255,255,0.8); margin: 0; font-size: 0.85rem !important; line-height: 1.4;">Content moderation</p>
-        </div>
-        """, unsafe_allow_html=True)
-    
-    st.markdown("<br><br>", unsafe_allow_html=True)
     
     # Analysis Settings in main page
     st.markdown("### ⚙️ Analysis Settings")
@@ -2157,7 +2062,7 @@ def main():
                 </style>
                 """, unsafe_allow_html=True)
                 
-                if st.button("🚀 Start Pro AI Analysis", type="primary", use_container_width=True):
+                if st.button("🚀 Start Pro AI Analysis", type="primary", width='stretch'):
                     sys_info = check_system_capabilities()
                     missing_deps = [k for k, v in sys_info.items() if not v]
                     
