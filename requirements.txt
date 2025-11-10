@@ -1,8 +1,9 @@
 streamlit>=1.25.0
-opencv-python-headless>=4.8.0
-scenedetect[opencv]>=0.6.2
+opencv-python-headless==4.8.1.78
+opencv-contrib-python-headless==4.8.1.78
+scenedetect[opencv-headless]>=0.6.2
 Pillow>=10.0.0
-numpy>=1.24.0
+numpy>=1.24.0,<2.0.0
 tqdm>=4.65.0
 moviepy>=1.0.3
 SpeechRecognition>=3.10.0
