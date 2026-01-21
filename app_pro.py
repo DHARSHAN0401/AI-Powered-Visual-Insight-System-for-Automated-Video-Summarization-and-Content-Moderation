@@ -946,31 +946,33 @@ def check_system_capabilities():
     try:
         import cv2
         capabilities['opencv'] = True
-    except ImportError:
+    except Exception:
         pass
     
     try:
         from scenedetect import detect, ContentDetector
         capabilities['scenedetect'] = True
-    except ImportError:
+    except Exception:
         pass
     
     try:
         import speech_recognition as sr
         capabilities['speech_recognition'] = True
-    except ImportError:
+    except Exception:
         pass
     
     try:
-        from moviepy import VideoFileClip
+        import importlib
+        importlib.import_module("moviepy.editor")
         capabilities['moviepy'] = True
-    except ImportError:
-        pass
+    except Exception:
+        # moviepy is optional; audio extraction will fall back to ffmpeg
+        capabilities['moviepy'] = False
     
     try:
         from textblob import TextBlob
         capabilities['textblob'] = True
-    except ImportError:
+    except Exception:
         pass
     
     return capabilities
@@ -1043,7 +1045,7 @@ def extract_keyframes_parallel(video_path: str, scenes: List[Tuple], output_dir:
 
 def extract_audio_from_video(video_path: str, output_dir: str) -> str | None:
     try:
-        from moviepy import VideoFileClip
+        from moviepy.editor import VideoFileClip  # type: ignore
         audio_path = os.path.join(output_dir, "audio.wav")
         
         video = VideoFileClip(video_path)
@@ -1053,6 +1055,7 @@ def extract_audio_from_video(video_path: str, output_dir: str) -> str | None:
                 fps=16000,
                 nbytes=2,
                 codec='pcm_s16le',
+                verbose=False,
                 logger=None
             )
             video.close()
@@ -1061,7 +1064,17 @@ def extract_audio_from_video(video_path: str, output_dir: str) -> str | None:
         video.close()
         return None
     except Exception as e:
-        st.warning(f"⚠️ Audio extraction warning: {str(e)}")
+        try:
+            import subprocess
+            audio_path = os.path.join(output_dir, "audio.wav")
+            subprocess.run(
+                ["ffmpeg", "-i", video_path, "-vn", "-acodec", "pcm_s16le", "-ar", "16000", "-ac", "1", audio_path],
+                capture_output=True, check=False, timeout=60
+            )
+            if os.path.exists(audio_path) and os.path.getsize(audio_path) > 1000:
+                return audio_path
+        except Exception:
+            pass
         return None
 
 def analyze_audio_properties(audio_path: str) -> Dict:
@@ -2067,7 +2080,7 @@ def main():
                     
                     if missing_deps:
                         st.warning(f"⚠️ Some features may not work. Missing: {', '.join(missing_deps)}")
-                        st.info("📦 Install missing packages: `pip install moviepy SpeechRecognition textblob nltk`")
+                        st.info("📦 Install missing packages: `pip install moviepy SpeechRecognition textblob nltk imageio-ffmpeg`")
                     
                     try:
                         if 'temp_dir' not in st.session_state:
