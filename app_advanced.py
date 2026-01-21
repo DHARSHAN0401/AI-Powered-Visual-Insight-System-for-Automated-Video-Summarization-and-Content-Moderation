@@ -5,13 +5,12 @@ import sys
 import json
 import time
 import tempfile
-import numpy as np
 from pathlib import Path
 from datetime import datetime, timedelta
 from typing import List, Dict, Optional, Tuple
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from PIL import Image
-import hashlib
+import io
 
 project_root = Path(__file__).parent
 sys.path.insert(0, str(project_root))
@@ -244,8 +243,8 @@ def process_video_advanced(
         if progress_callback:
             progress_callback("Detecting scenes...", 0.15)
         
-        preprocessor = VideoPreprocessor(output_dir)
-        scenes = preprocessor.detect_scenes(video_path, threshold=scene_threshold)
+        preprocessor = VideoPreprocessor(video_path, output_dir)
+        scenes = preprocessor.detect_scenes(scene_threshold)
         results['scenes'] = scenes
         
         if progress_callback:
@@ -272,7 +271,7 @@ def process_video_advanced(
             if progress_callback:
                 progress_callback("Transcribing audio...", 0.60)
             
-            audio_path = preprocessor.extract_audio(video_path)
+            audio_path = preprocessor.extract_audio()
             if audio_path and os.path.exists(audio_path):
                 transcriber = SpeechTranscriber(use_gpu=use_gpu)
                 transcript, segments = transcriber.transcribe(audio_path)
@@ -284,7 +283,8 @@ def process_video_advanced(
                 progress_callback("Generating summary...", 0.75)
             
             summarizer = TextSummarizer(use_gpu=use_gpu)
-            summary = summarizer.summarize(results['transcript'])
+            transcript_text = str(results['transcript']) if results['transcript'] else ""
+            summary = summarizer.summarize(transcript_text)
             results['summary'] = summary
         
         if enable_moderation:

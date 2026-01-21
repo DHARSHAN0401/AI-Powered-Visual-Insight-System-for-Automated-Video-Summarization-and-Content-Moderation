@@ -29,9 +29,7 @@ class SpeechTranscriber:
             return "", []
         try:
             res = self.model.transcribe(audio_path, fp16=self.device=="cuda")
-            text = res.get("text", "")
-            segments = res.get("segments", [])
-            return text, segments
+            return res.get("text", ""), res.get("segments", [])
         except Exception as e:
             logger.error(f"Error during transcription: {e}")
             return "", []

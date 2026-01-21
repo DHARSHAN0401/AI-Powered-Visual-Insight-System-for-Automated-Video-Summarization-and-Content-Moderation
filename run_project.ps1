@@ -15,7 +15,8 @@ Write-Host ""
 $env:STREAMLIT_SERVER_HEADLESS = "true"
 $env:STREAMLIT_BROWSER_GATHER_USAGE_STATS = "false"
 
-python -m streamlit run app_pro.py --server.port=8501
+# Use workspace virtual environment Python explicitly to avoid PATH issues
+& "D:/Major Final Year Project/.venv/Scripts/python.exe" -m streamlit run "D:/Major Final Year Project/app_pro.py" --server.port=8501
 
 Write-Host ""
 Write-Host "Application closed." -ForegroundColor Yellow

@@ -5,13 +5,10 @@ import sys
 import json
 import time
 import tempfile
-import numpy as np
 from pathlib import Path
 from datetime import datetime, timedelta
 from typing import List, Dict, Optional, Tuple
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from PIL import Image
-import hashlib
 
 project_root = Path(__file__).parent
 sys.path.insert(0, str(project_root))

@@ -11,7 +11,6 @@ from datetime import datetime, timedelta
 from typing import List, Dict, Optional, Tuple
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from PIL import Image
-import hashlib
 import re
 from collections import Counter
 import io
@@ -1619,7 +1618,7 @@ def analyze_video_quality(video_path: str, keyframes: List) -> Dict:
             if os.path.exists(kf['frame_path']):
                 img = cv2.imread(kf['frame_path'], cv2.IMREAD_GRAYSCALE)
                 if img is not None:
-                    laplacian = cv2.Laplacian(img, cv2.CV_64F)
+                    laplacian = cv2.Laplacian(img, cv2.CV_64F)  # type: ignore
                     sharpness = laplacian.var()
                     sharpness_scores.append(sharpness)
     
@@ -1836,30 +1835,30 @@ def main():
     col1, col2, col3, col4, col5 = st.columns(5)
     
     with col1:
-        if st.button("🎥 All Videos", use_container_width=True, type="primary" if st.session_state['filter_selection'] == 'All Videos' else "secondary"):
+        if st.button("🎥 All Videos", width='stretch', type="primary" if st.session_state['filter_selection'] == 'All Videos' else "secondary"):
             st.session_state['filter_selection'] = 'All Videos'
             st.rerun()
     
     with col2:
         analyzed_count = 1 if 'results' in st.session_state and st.session_state.get('results', {}).get('success') else 0
-        if st.button(f"✅ Analyzed ({analyzed_count})", use_container_width=True, type="primary" if st.session_state['filter_selection'] == 'Analyzed' else "secondary"):
+        if st.button(f"✅ Analyzed ({analyzed_count})", width='stretch', type="primary" if st.session_state['filter_selection'] == 'Analyzed' else "secondary"):
             st.session_state['filter_selection'] = 'Analyzed'
             st.rerun()
     
     with col3:
-        if st.button("⏳ Processing", use_container_width=True, type="primary" if st.session_state['filter_selection'] == 'Processing' else "secondary"):
+        if st.button("⏳ Processing", width='stretch', type="primary" if st.session_state['filter_selection'] == 'Processing' else "secondary"):
             st.session_state['filter_selection'] = 'Processing'
             st.rerun()
     
     with col4:
         moderated_count = 1 if 'results' in st.session_state and st.session_state.get('results', {}).get('moderation') else 0
-        if st.button(f"🛡️ Moderated ({moderated_count})", use_container_width=True, type="primary" if st.session_state['filter_selection'] == 'Moderated' else "secondary"):
+        if st.button(f"🛡️ Moderated ({moderated_count})", width='stretch', type="primary" if st.session_state['filter_selection'] == 'Moderated' else "secondary"):
             st.session_state['filter_selection'] = 'Moderated'
             st.rerun()
     
     with col5:
         fav_count = len(st.session_state['favorites'])
-        if st.button(f"⭐ Favorites ({fav_count})", use_container_width=True, type="primary" if st.session_state['filter_selection'] == 'Favorites' else "secondary"):
+        if st.button(f"⭐ Favorites ({fav_count})", width='stretch', type="primary" if st.session_state['filter_selection'] == 'Favorites' else "secondary"):
             st.session_state['filter_selection'] = 'Favorites'
             st.rerun()
     
@@ -1932,7 +1931,7 @@ def main():
                                 with col_metric2:
                                     st.metric("⏱️ Duration", f"{duration:.1f}s")
                                 
-                                if st.button(f"👁️ View", key=f"view_main_fav_{fav_idx}", use_container_width=True):
+                                if st.button(f"👁️ View", key=f"view_main_fav_{fav_idx}", width='stretch'):
                                     st.session_state['results'] = fav['results']
                                     st.session_state['uploaded_file_name'] = fav['name']
                                     st.session_state['video_id'] = fav['id']
@@ -2232,7 +2231,7 @@ def main():
                                     ">Scene {img_idx + 1}</div>
                                 </div>
                                 """, unsafe_allow_html=True)
-                                st.image(img, use_container_width=True)
+                                st.image(img, width='stretch')
                                 st.caption(f"⏱️ {scene_time:.1f}s", unsafe_allow_html=False)
             
             st.markdown("---")
@@ -2387,7 +2386,7 @@ def main():
                 
                 waveform_path = results.get('waveform_path')
                 if waveform_path and os.path.exists(waveform_path):
-                    st.image(waveform_path, use_container_width=True)
+                    st.image(waveform_path, width='stretch')
                 else:
                     st.info("🎵 Waveform visualization not available")
             else:

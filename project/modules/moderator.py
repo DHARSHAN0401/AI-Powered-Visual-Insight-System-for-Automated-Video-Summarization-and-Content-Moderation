@@ -71,6 +71,3 @@ class Moderator:
             if found_words:
                 text_flags.append({"start": seg.get("start"), "end": seg.get("end"), "words": list(found_words), "text": seg.get("text")})
         return text_flags
-    
-    def moderate_images_and_text(self, det_results: list, speech_segments: list):
-        return self.moderate(det_results, speech_segments)
